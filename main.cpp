@@ -7,6 +7,10 @@
 #include "tools.h"
 #include "Camera.h"
 #include "ParticleSystem.h"
+#include "imgui.h"
+#include "imgui_impl_glfw_gl3.h"
+
+bool rotate = true;
 
 int main()
 {
@@ -32,6 +36,11 @@ int main()
 	glewInit();
 
 	glEnable(GL_DEPTH_TEST);
+
+	ImGui::CreateContext();
+	ImGui_ImplGlfwGL3_Init(window, true);
+	ImGui::StyleColorsDark();
+
 
 	float deltaTime = 0, lastTime = GetTickCount();
 	auto windowNative = (HWND)glfwGetWin32Window(window);
@@ -59,6 +68,36 @@ int main()
 		deltaTime = GetTickCount() - lastTime;
 		lastTime = GetTickCount();
 		deltaTime /= 1000;
+
+		ImGui_ImplGlfwGL3_NewFrame();
+
+		{
+			ImGui::Begin("Particle settings");
+			ImGui::Text("Particle Editor");                           // Display some text (you can use a format string too)
+			ImGui::SliderFloat("fade weight", &particles.fadeWeight, -10.0f, 10.0f);            // Edit 1 float using a slider from 0.0f to 1.0f    
+			ImGui::ColorEdit3("fade color", (float*)&particles.fadeColor); // Edit 3 floats representing a color
+			ImGui::ColorEdit3("color1", (float*)&particles.fadeColor); // Edit 3 floats representing a color
+			ImGui::ColorEdit3("color2", (float*)&particles.fadeColor); // Edit 3 floats representing a color
+			ImGui::NewLine();
+
+			ImGui::SliderFloat("size", &particles.scale, 0, 10);
+			ImGui::NewLine();
+
+			ImGui::SliderFloat3("direction1", &particles.direction1.x, -5, 5);
+			ImGui::SliderFloat3("direction2", &particles.direction2.x, -5, 5);
+			ImGui::SliderFloat("speed1", &particles.speed1, 0, 10);
+			ImGui::SliderFloat("speed2", &particles.speed2, 0, 10);
+			ImGui::SliderFloat3("gravity", &particles.gravity.x, -10, 10);
+			ImGui::NewLine();
+
+			ImGui::Checkbox("show rotate", &rotate);
+			ImGui::NewLine();
+
+			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+			ImGui::End();
+		}
+
+
 
 		POINT cursorPos;
 		GetCursorPos(&cursorPos);
@@ -100,7 +139,10 @@ int main()
 			camera.position.y -= deltaTime * 10;
 		}
 
-		cameraAnge += deltaTime * 0.5;
+		if (rotate)
+		{
+			cameraAnge += deltaTime * 0.5;
+		}
 
 		camera.position = { sin(cameraAnge) * cameraR, camera.position.y, cos(cameraAnge) * cameraR };
 			
@@ -120,12 +162,28 @@ int main()
 
 		particles.draw(deltaTime);
 
+
+		ImGui::Render();
+		ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
+
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		{
+			int w;
+			int h;
+			glfwGetWindowSize(window, &w, &h);
+			width = w;
+			heigth = h;
+			glViewport(0, 0, width, heigth);
+
+		}
+
 	}
 
-
+	ImGui_ImplGlfwGL3_Shutdown();
+	ImGui::DestroyContext();
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;

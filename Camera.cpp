@@ -79,7 +79,6 @@ glm::mat4 Camera::getObjectToWorld()
 	}
 	else
 	{
-
 		return glm::lookAt(getFirstPersonPosition(), playerPosition, upPositipon);
 	}
 }
