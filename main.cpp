@@ -1,3 +1,9 @@
+//////////////////////////////////////////////////
+//ParticleEditor
+//Luta Vlad - 2019
+//https://github.com/meemknight/ParticleSystemGl
+//https://github.com/meemknight/OpenGLEngine
+//////////////////////////////////////////////////
 #define GLFW_EXPOSE_NATIVE_WGL
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GL/glew.h>
@@ -144,9 +150,7 @@ int main()
 			{
 				ImGui::SliderInt("Particle Count###pc2", &count, 0, 250);
 			}
-
 			ImGui::NewLine();
-
 
 			ImGui::Checkbox("preview rotation", &rotate);
 			ImGui::NewLine();
@@ -160,7 +164,8 @@ int main()
 			ImGui::SameLine();
 			if (ImGui::Button("load"))
 			{
-				load(fileName, particles);
+				particles.cleanup();
+				particles.loadParticleSystem((std::string(fileName)+".part").c_str());
 			}
 
 			ImGui::NewLine();

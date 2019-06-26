@@ -45,6 +45,7 @@ void save(const char * name, ParticleSystem ps)
 
 #undef W
 
+[[deprecated]]
 void load(const char * name, ParticleSystem &ps)
 {
 	std::string n = name;
