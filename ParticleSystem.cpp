@@ -162,6 +162,9 @@ void ParticleSystem::cleanup()
 
 void ParticleSystem::buildParticleSystem()
 {
+	currentParticle = 0;
+	accumulatedAdvance = 0.f;
+
 	glGenBuffers(1, &vertexShapeId);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexShapeId);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferData), vertexBufferData, GL_STATIC_DRAW);

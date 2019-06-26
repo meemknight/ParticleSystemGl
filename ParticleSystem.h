@@ -46,7 +46,7 @@ struct ParticleSystem
 	void buildParticleSystem();
 
 	//modifying this might break the program if the particle system is running
-	unsigned int count;
+	unsigned int count; 
 
 private:
 

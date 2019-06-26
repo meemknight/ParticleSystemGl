@@ -9,7 +9,7 @@
 #include "ParticleSystem.h"
 #include "imgui.h"
 #include "imgui_impl_glfw_gl3.h"
-
+#include "save.h"
 
 int main()
 {
@@ -49,7 +49,7 @@ int main()
 	camera.position = { 0,0, cameraR };
 	camera.mSpeed = 10;
 	float cameraAnge = 0;
-	bool xyEqual;
+	bool xyEqual = true;
 	bool rotate = true;
 	bool smallNumber = false;
 
@@ -59,13 +59,14 @@ int main()
 	ParticleSystem particles(count, 8, particleShader, { 1,0,0 }, { 1,1,0 }, { -1, -5, -1 }, { 1, 5, 1 }, 2, 2.2);
 	particles.camera = &camera;
 	//particles.light = &light;
-	particles.affectedByLight = false;
+	particles.affectedByLight = true;
 	particles.fadeColor = { 0,0,1 };
 	particles.fadeWeight = -1;
 	particles.scale = 0.2f;
 	particles.gravity = { 0,0,0 };
 	particles.kd = 0.2f;
 	bool shouldReset = false;
+	char fileName[30] = {};
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -80,6 +81,13 @@ int main()
 			ImGui::Text("Particle Editor");                           // Display some text (you can use a format string too)
 			ImGui::SliderFloat("fade weight", &particles.fadeWeight, -10.0f, 10.0f);            // Edit 1 float using a slider from 0.0f to 1.0f    
 			ImGui::ColorEdit3("fade color", (float*)&particles.fadeColor); // Edit 3 floats representing a color
+			ImGui::NewLine();
+
+			ImGui::Checkbox("affected by light", &particles.affectedByLight);
+			if(particles.affectedByLight)
+			{
+				ImGui::SliderFloat("kd", &particles.kd, 0, 1);
+			}
 			ImGui::NewLine();
 
 			ImGui::SliderFloat("size", &particles.scale, 0, 5);
@@ -143,6 +151,20 @@ int main()
 			ImGui::Checkbox("preview rotation", &rotate);
 			ImGui::NewLine();
 
+			ImGui::InputText("fileName", fileName, sizeof(fileName));
+			ImGui::SameLine();
+			if(ImGui::Button("save"))
+			{
+				save(fileName, particles);
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("load"))
+			{
+				load(fileName, particles);
+			}
+
+			ImGui::NewLine();
+
 			float f = ImGui::GetIO().Framerate;
 			if(f<20)
 			{
@@ -161,16 +183,11 @@ int main()
 
 		for(int i=0; i<3; i++)
 		{
-			if (particles.color1[i] > particles.color2[i])
-			{
-				std::swap(particles.color1[i], particles.color2[i]);
-			}
 
 			if(particles.direction1[i] > particles.direction2[i])
 			{
 				std::swap(particles.direction1[i], particles.direction2[i]);
 			}
-
 
 		}
 
