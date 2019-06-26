@@ -45,9 +45,10 @@ struct ParticleSystem
 
 	void buildParticleSystem();
 
-private:
-
+	//modifying this might break the program if the particle system is running
 	unsigned int count;
+
+private:
 
 	glm::vec3 *ParticlePositions;
 	glm::vec3 *ParticleDrag;

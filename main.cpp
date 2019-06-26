@@ -10,7 +10,6 @@
 #include "imgui.h"
 #include "imgui_impl_glfw_gl3.h"
 
-bool rotate = true;
 
 int main()
 {
@@ -50,10 +49,14 @@ int main()
 	camera.position = { 0,0, cameraR };
 	camera.mSpeed = 10;
 	float cameraAnge = 0;
+	bool xyEqual;
+	bool rotate = true;
+	bool smallNumber = false;
 
 	ShaderProgram particleShader({ "particleVert.vert" }, { "particleFrag.frag" });
 	
-	ParticleSystem particles(4'000, 8, particleShader, { 1,0,0 }, { 1,1,0 }, { -1, 5,-1 }, { 1,-5 ,1 }, 2, 2.2);
+	int count = 40'000;
+	ParticleSystem particles(count, 8, particleShader, { 1,0,0 }, { 1,1,0 }, { -1, -5, -1 }, { 1, 5, 1 }, 2, 2.2);
 	particles.camera = &camera;
 	//particles.light = &light;
 	particles.affectedByLight = false;
@@ -62,6 +65,7 @@ int main()
 	particles.scale = 0.2f;
 	particles.gravity = { 0,0,0 };
 	particles.kd = 0.2f;
+	bool shouldReset = false;
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -76,27 +80,113 @@ int main()
 			ImGui::Text("Particle Editor");                           // Display some text (you can use a format string too)
 			ImGui::SliderFloat("fade weight", &particles.fadeWeight, -10.0f, 10.0f);            // Edit 1 float using a slider from 0.0f to 1.0f    
 			ImGui::ColorEdit3("fade color", (float*)&particles.fadeColor); // Edit 3 floats representing a color
-			ImGui::ColorEdit3("color1", (float*)&particles.fadeColor); // Edit 3 floats representing a color
-			ImGui::ColorEdit3("color2", (float*)&particles.fadeColor); // Edit 3 floats representing a color
 			ImGui::NewLine();
 
-			ImGui::SliderFloat("size", &particles.scale, 0, 10);
+			ImGui::SliderFloat("size", &particles.scale, 0, 5);
+			ImGui::SliderFloat("particle duration", &particles.cicleDuration, 0, 20);
 			ImGui::NewLine();
 
-			ImGui::SliderFloat3("direction1", &particles.direction1.x, -5, 5);
-			ImGui::SliderFloat3("direction2", &particles.direction2.x, -5, 5);
+			ImGui::Checkbox("X, Z equal", &xyEqual);
+
+			if(xyEqual)
+			{
+				float dir = particles.direction2.x;
+				ImGui::SliderFloat("direction On x, z", &dir, 0, 5);
+				particles.direction1.x = -dir;
+				particles.direction1.z = -dir;
+				particles.direction2.x = dir;
+				particles.direction2.z = dir;
+				ImGui::SameLine(); if (ImGui::Button("Reset###r11")) { particles.direction1 = { 0,0,0 }; particles.direction2 = { 0,0,0 };}
+
+			}else
+			{
+				ImGui::SliderFloat3("direction1", &particles.direction1.x, -5, 5);
+				ImGui::SameLine(); if (ImGui::Button("Reset###r1")) { particles.direction1 = { 0,0,0 }; }
+
+				ImGui::SliderFloat3("direction2", &particles.direction2.x, -5, 5);
+				ImGui::SameLine(); if (ImGui::Button("Reset###r2")) { particles.direction2 = { 0,0,0 }; }
+
+				
+			}
+
 			ImGui::SliderFloat("speed1", &particles.speed1, 0, 10);
 			ImGui::SliderFloat("speed2", &particles.speed2, 0, 10);
 			ImGui::SliderFloat3("gravity", &particles.gravity.x, -10, 10);
+			ImGui::SameLine(); if (ImGui::Button("Reset###r3")) { particles.gravity = { 0,0,0 }; }
 			ImGui::NewLine();
 
-			ImGui::Checkbox("show rotate", &rotate);
+			ImGui::Text("You have to reset the particle for this effects to be applied");
+			ImGui::SameLine();
+			if (ImGui::Button("Reset System")) 
+			{
+				shouldReset = true;				
+			};
+
+			ImGui::ColorEdit3("color1", (float*)&particles.color1); // Edit 3 floats representing a color
+			ImGui::ColorEdit3("color2", (float*)&particles.color2); // Edit 3 floats representing a color
+			if(ImGui::Checkbox("Small number of particles", &smallNumber) && smallNumber)
+			{
+				count = 250;
+			}
+
+			if(!smallNumber)
+			{
+				ImGui::SliderInt("Particle Count###pc1", &count, 0, 1'000'000);
+			}else
+			{
+				ImGui::SliderInt("Particle Count###pc2", &count, 0, 250);
+			}
+
 			ImGui::NewLine();
 
-			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+			ImGui::Checkbox("preview rotation", &rotate);
+			ImGui::NewLine();
+
+			float f = ImGui::GetIO().Framerate;
+			if(f<20)
+			{
+				ImGui::TextColored({1,0,0,1}, "Application average %.3f ms/frame (%.1f FPS)", 1000.0f / f, f);
+			}else
+			if(f<40)
+			{
+				ImGui::TextColored({ 1,1,0,1 }, "Application average %.3f ms/frame (%.1f FPS)", 1000.0f / f, f);
+			}else
+			{
+				ImGui::TextColored({ 0,1,0,1 }, "Application average %.3f ms/frame (%.1f FPS)", 1000.0f / f, f);
+			}
+
 			ImGui::End();
 		}
 
+		for(int i=0; i<3; i++)
+		{
+			if (particles.color1[i] > particles.color2[i])
+			{
+				std::swap(particles.color1[i], particles.color2[i]);
+			}
+
+			if(particles.direction1[i] > particles.direction2[i])
+			{
+				std::swap(particles.direction1[i], particles.direction2[i]);
+			}
+
+
+		}
+
+		if(particles.speed1 > particles.speed2)
+		{
+			std::swap(particles.speed1, particles.speed2);
+		}
+	
+
+		if(shouldReset)
+		{
+			particles.cleanup();
+			particles.count = count;
+			particles.buildParticleSystem();
+			shouldReset = false;
+		}
 
 
 		POINT cursorPos;
@@ -146,9 +236,6 @@ int main()
 
 		camera.position = { sin(cameraAnge) * cameraR, camera.position.y, cos(cameraAnge) * cameraR };
 			
-
-		llog(camera.position.x, camera.position.y, camera.position.z);
-
 		//if (GetAsyncKeyState('R'))
 		//{
 		//	camera.moveUp(deltaTime);

@@ -155,6 +155,9 @@ void ParticleSystem::cleanup()
 
 	delete[] ParticlePositions;
 	delete[] ParticleDrag;
+
+	currentParticle = 0;
+	accumulatedAdvance = 0.f;
 }
 
 void ParticleSystem::buildParticleSystem()
