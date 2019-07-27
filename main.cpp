@@ -17,7 +17,7 @@
 #include "imgui_impl_glfw_gl3.h"
 #include "save.h"
 
-int main()
+int MAIN
 {
 	if(!glfwInit())
 	{
@@ -72,7 +72,7 @@ int main()
 	particles.gravity = { 0,0,0 };
 	particles.kd = 0.2f;
 	bool shouldReset = false;
-	char fileName[30] = {};
+	char fileName[40] = {};
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -159,13 +159,26 @@ int main()
 			ImGui::SameLine();
 			if(ImGui::Button("save"))
 			{
-				save(fileName, particles);
+				if (std::string(fileName).find('.') != std::string::npos)
+				{
+					save(fileName, particles);
+				}else
+				{
+					save((std::string(fileName) + ".part").c_str(), particles);
+				}
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("load"))
 			{
 				particles.cleanup();
-				particles.loadParticleSystem((std::string(fileName)+".part").c_str());
+				if(std::string(fileName).find('.') != std::string::npos)
+				{
+					particles.loadParticleSystem((std::string(fileName)).c_str());
+				}else
+				{
+					particles.loadParticleSystem((std::string(fileName) + ".part").c_str());
+				}
+				count = particles.count;
 			}
 
 			ImGui::NewLine();
