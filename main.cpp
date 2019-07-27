@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////
-//ParticleEditor
+//ParticleEditor 1.0
 //Luta Vlad - 2019
 //https://github.com/meemknight/ParticleSystemGl
 //https://github.com/meemknight/OpenGLEngine
@@ -296,8 +296,12 @@ int MAIN
 			int w;
 			int h;
 			glfwGetWindowSize(window, &w, &h);
-			width = w;
-			heigth = h;
+			if(w !=0 && h != 0)
+			{
+				width = w;
+				heigth = h;
+			}
+			
 			glViewport(0, 0, width, heigth);
 
 		}
