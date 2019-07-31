@@ -97,7 +97,7 @@ int MAIN
 			ImGui::NewLine();
 
 			ImGui::SliderFloat("size", &particles.scale, 0, 5);
-			ImGui::SliderFloat("particle duration", &particles.cicleDuration, 0, 20);
+			ImGui::SliderFloat("particle duration", &particles.cicleDuration, 0.1, 20);
 			ImGui::NewLine();
 
 			ImGui::Checkbox("X, Z equal", &xyEqual);

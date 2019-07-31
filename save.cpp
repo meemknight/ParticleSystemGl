@@ -15,7 +15,6 @@ void save(const char * name, ParticleSystem ps)
 {
 
 	std::string n = name;
-	n += ".part";
 
 	std::ofstream f(n, std::ios::out | std::ios::binary | std::ios::trunc);
 
@@ -49,7 +48,6 @@ void save(const char * name, ParticleSystem ps)
 void load(const char * name, ParticleSystem &ps)
 {
 	std::string n = name;
-	n += ".part";
 
 	std::ifstream f(n, std::ios::in | std::ios::binary);
 
