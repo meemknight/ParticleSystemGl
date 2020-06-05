@@ -3,6 +3,7 @@
 #include <functional>
 #include <utility>
 #include <fstream>
+#include <nmmintrin.h>
 
 std::random_device rng;
 std::uniform_real_distribution<float> negDist(-2.0, 2.0);
@@ -63,33 +64,105 @@ void ParticleSystem::draw(float deltaTime)
 			newPosition = currentParticle + particleAdvance;
 		}
 
+#pragma region resetParticles
+
+
 		for (int i = currentParticle; i < currentParticle + particleAdvance; i++)
 		{
-			ParticlePositions[i] = position;
-			ParticleDrag[i].x = xDist(rng);
-			ParticleDrag[i].y = yDist(rng);
-			ParticleDrag[i].z = zDist(rng);
-			ParticleDrag[i] = glm::normalize(ParticleDrag[i]);
-			ParticleDrag[i] *= speedDist(rng);
+			ParticlePositionsX[i] = position.x;
+			ParticlePositionsY[i] = position.y;
+			ParticlePositionsZ[i] = position.z;
 		}
 
 		for (int i = 0; i < overflow; i++)
 		{
-			ParticlePositions[i] = position;
-			ParticleDrag[i].x = xDist(rng);
-			ParticleDrag[i].y = yDist(rng);
-			ParticleDrag[i].z = zDist(rng);
-			ParticleDrag[i] = glm::normalize(ParticleDrag[i]);
-			ParticleDrag[i] *= speedDist(rng);
+			ParticlePositionsX[i] = position.x;
+			ParticlePositionsY[i] = position.y;
+			ParticlePositionsZ[i] = position.z;
+		}
+
+
+		for (int i = currentParticle; i < currentParticle + particleAdvance; i++)
+		{
+			glm::vec3 drag = glm::normalize(glm::vec3{ xDist(rng), yDist(rng), zDist(rng) });
+			drag *= speedDist(rng);
+
+			ParticleDragX[i] = drag.x;
+			ParticleDragY[i] = drag.y;
+			ParticleDragZ[i] = drag.z;
+		}
+
+		for (int i = 0; i < overflow; i++)
+		{
+			glm::vec3 drag = glm::normalize(glm::vec3{ xDist(rng), yDist(rng), zDist(rng) });
+			drag *= speedDist(rng);
+
+			ParticleDragX[i] = drag.x;
+			ParticleDragY[i] = drag.y;
+			ParticleDragZ[i] = drag.z;
 		}
 
 		currentParticle = newPosition;
 
-		for (int i = 0; i < count; i++)
+#pragma endregion
+
+	
+#pragma region apply drag
+
+		/*
+		auto drag = glm::vec3(ParticleDrag[i]) * deltaTime;
+		ParticlePositionsX[i] += drag.x;
+		ParticlePositionsY[i] += drag.y;
+		ParticlePositionsZ[i] += drag.z;
+
+		ParticleDrag[i] += gravity * deltaTime;
+		*/
+
+		__m128 _deltaTime4 = _mm_set1_ps(deltaTime);
+		__m128 _gravityDtX4 = _mm_set1_ps(gravity.x * deltaTime);
+		__m128 _gravityDtY4 = _mm_set1_ps(gravity.y* deltaTime);
+		__m128 _gravityDtZ4 = _mm_set1_ps(gravity.z * deltaTime);
+
+		for (int i = 0; i < count; i+=4)
 		{
-			ParticlePositions[i] += glm::vec3(ParticleDrag[i]) * deltaTime;
-			ParticleDrag[i] += gravity * deltaTime;
+			//ParticlePositionsX[i] += ParticleDragX[i] * deltaTime;
+			__m128 *_pos4 = (__m128*)&ParticlePositionsX[i];
+			__m128 *_drag4 = (__m128*)&ParticleDragX[i];
+			*_pos4 = _mm_fmadd_ps(*_drag4, _deltaTime4, *_pos4);
+
+			//ParticleDragX[i] += gravity.x * deltaTime;
+			*_drag4 = _mm_add_ps(*_drag4, _gravityDtX4);
 		}
+
+	
+		for (int i = 0; i < count; i+=4)
+		{
+			//ParticlePositionsY[i] += ParticleDragY[i] * deltaTime;
+			__m128 *_pos4 = (__m128*)&ParticlePositionsY[i];
+			__m128 *_drag4 = (__m128*)&ParticleDragY[i];
+			*_pos4 = _mm_fmadd_ps(*_drag4, _deltaTime4, *_pos4);
+
+			//ParticleDragY[i] += gravity.y * deltaTime;
+			*_drag4 = _mm_add_ps(*_drag4, _gravityDtY4);
+
+		}
+
+		for (int i = 0; i < count; i+=4)
+		{
+		//ParticlePositionsZ[i] += ParticleDragZ[i] * deltaTime;
+			__m128 *_pos4 = (__m128*)&ParticlePositionsZ[i];
+			__m128 *_drag4 = (__m128*)&ParticleDragZ[i];
+			*_pos4 = _mm_fmadd_ps(*_drag4, _deltaTime4, *_pos4);
+
+		//ParticleDragZ[i] += gravity.z * deltaTime;
+			*_drag4 = _mm_add_ps(*_drag4, _gravityDtZ4);
+		
+		}
+
+
+
+#pragma endregion
+
 
 		//shape
 		glEnableVertexAttribArray(0);
@@ -99,8 +172,32 @@ void ParticleSystem::draw(float deltaTime)
 		//positions
 		glEnableVertexAttribArray(1);
 		glBindBuffer(GL_ARRAY_BUFFER, vertexPositionId);
-		glBufferData(GL_ARRAY_BUFFER, count * 3 * sizeof(float), ParticlePositions, GL_STREAM_DRAW);
+		//glBufferData(GL_ARRAY_BUFFER, count * 3 * sizeof(float), ParticlePositions, GL_STREAM_DRAW);
+		//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+		glBufferData(GL_ARRAY_BUFFER, count * 3 * sizeof(float), nullptr, GL_STREAM_DRAW);
+		
+		float *buff = (float*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+		//elog(buff);
+		int lastFlush = 0;
+		for(int i=0; i<count; i++)
+		{
+			buff[3 * i + 0] = ParticlePositionsX[i];
+			buff[3 * i + 1] = ParticlePositionsY[i];
+			buff[3 * i + 2] = ParticlePositionsZ[i];
+
+			if(i % 1000 == 0)
+			{
+				glFlushMappedBufferRange(GL_ARRAY_BUFFER, lastFlush * 3 * sizeof(float), (count - lastFlush) * 3 * sizeof(float));
+				lastFlush = count;
+			}
+		}
+		glFlushMappedBufferRange(GL_ARRAY_BUFFER, lastFlush * 3 * sizeof(float), (count - lastFlush) * 3 * sizeof(float));
+
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
 
 		//colors
 		glEnableVertexAttribArray(2);
@@ -162,8 +259,12 @@ void ParticleSystem::cleanup()
 	glDeleteBuffers(1, &vertexPositionId);
 	glDeleteBuffers(1, &vertexColorsId);
 
-	delete[] ParticlePositions;
-	delete[] ParticleDrag;
+	delete[] ParticlePositionsX;
+	delete[] ParticlePositionsY;
+	delete[] ParticlePositionsZ;
+	delete[] ParticleDragX;
+	delete[] ParticleDragY;
+	delete[] ParticleDragZ;
 
 	currentParticle = 0;
 	accumulatedAdvance = 0.f;
@@ -199,14 +300,28 @@ void ParticleSystem::buildParticleSystem()
 
 	delete[] colors;
 
-	ParticlePositions = new glm::vec3[count];
-	ParticleDrag = new glm::vec3[count];
+	ParticlePositionsX = new float[count + 3];
+	ParticlePositionsY = new float[count + 3];
+	ParticlePositionsZ = new float[count + 3];
+	ParticleDragX = new float[count + 3];
+	ParticleDragY = new float[count + 3];
+	ParticleDragZ = new float[count + 3];
 	
 	for (int i = 0; i < count; i++)
 	{
-		ParticlePositions[i].x = 0;
-		ParticlePositions[i].y = 0;
-		ParticlePositions[i].z = 0;
+		ParticlePositionsX[i] = 0;
+		ParticlePositionsY[i] = 0;
+		ParticlePositionsZ[i] = 0;
+	}
+
+	for(int i=0; i<3; i++)
+	{
+		ParticlePositionsX	[count+i]=0;
+		ParticlePositionsY	[count+i]=0;
+		ParticlePositionsZ	[count+i]=0;
+		ParticleDragX		[count+i]=0;
+		ParticleDragY		[count+i]=0;
+		ParticleDragZ		[count+i]=0;
 	}
 
 	std::uniform_real_distribution<float> xDist(direction1.x, direction2.x);
@@ -217,11 +332,12 @@ void ParticleSystem::buildParticleSystem()
 
 	for(int i=0; i<count; i++)
 	{
-		ParticleDrag[i].x = xDist(rng);
-		ParticleDrag[i].y = yDist(rng);
-		ParticleDrag[i].z = zDist(rng);
-		ParticleDrag[i] = glm::normalize(ParticleDrag[i]);
-		ParticleDrag[i] *= speedDist(rng);
+		glm::vec3 drag = glm::normalize(glm::vec3{ xDist(rng), yDist(rng), zDist(rng) });
+		drag *= speedDist(rng);
+
+		ParticleDragX[i] = drag.x;
+		ParticleDragY[i] = drag.y;
+		ParticleDragZ[i] = drag.z;
 	}
 
 }

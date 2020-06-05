@@ -36,7 +36,7 @@ int MAIN
 	}
 
 	glfwMakeContextCurrent(window);
-	glfwSwapInterval(1);
+	//glfwSwapInterval(1);
 
 	glewInit();
 
@@ -47,7 +47,7 @@ int MAIN
 	ImGui::StyleColorsDark();
 
 
-	float deltaTime = 0, lastTime = GetTickCount();
+	float deltaTime = 0; int lastTime = GetTickCount();
 	auto windowNative = (HWND)glfwGetWin32Window(window);
 	Camera camera(windowNative, 85.f, &width, &heigth, 0.1f, 100);
 	camera.rSpeed = 0.2;
@@ -76,9 +76,8 @@ int MAIN
 
 	while (!glfwWindowShouldClose(window))
 	{
-		deltaTime = GetTickCount() - lastTime;
+		deltaTime = (GetTickCount() - lastTime)/1000.f;
 		lastTime = GetTickCount();
-		deltaTime /= 1000;
 
 		ImGui_ImplGlfwGL3_NewFrame();
 
@@ -145,10 +144,10 @@ int MAIN
 
 			if(!smallNumber)
 			{
-				ImGui::SliderInt("Particle Count###pc1", &count, 0, 1'000'000);
+				ImGui::SliderInt("Particle Count###pc1", &count, 0, 3'000'000);
 			}else
 			{
-				ImGui::SliderInt("Particle Count###pc2", &count, 0, 250);
+				ImGui::SliderInt("Particle Count###pc2", &count, 0, 500);
 			}
 			ImGui::NewLine();
 

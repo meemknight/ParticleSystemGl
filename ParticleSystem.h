@@ -63,8 +63,12 @@ struct ParticleSystem
 
 private:
 
-	glm::vec3 *ParticlePositions;
-	glm::vec3 *ParticleDrag;
+	float *ParticlePositionsX;
+	float *ParticlePositionsY;
+	float *ParticlePositionsZ;
+	float *ParticleDragX;
+	float *ParticleDragY;
+	float *ParticleDragZ;
 
 	GLuint vertexShapeId = 0;
 	GLuint vertexPositionId = 0;
