@@ -69,15 +69,31 @@ void ParticleSystem::draw(float deltaTime)
 
 		for (int i = currentParticle; i < currentParticle + particleAdvance; i++)
 		{
+			ParticlePositionsX[i] = position.x;			
+		}
+	
+		for (int i = 0; i < overflow; i++)
+		{
 			ParticlePositionsX[i] = position.x;
+		}
+
+		for (int i = currentParticle; i < currentParticle + particleAdvance; i++)
+		{
 			ParticlePositionsY[i] = position.y;
+		}
+	
+		for (int i = 0; i < overflow; i++)
+		{
+			ParticlePositionsY[i] = position.y;
+		}
+
+		for (int i = currentParticle; i < currentParticle + particleAdvance; i++)
+		{
 			ParticlePositionsZ[i] = position.z;
 		}
 
 		for (int i = 0; i < overflow; i++)
 		{
-			ParticlePositionsX[i] = position.x;
-			ParticlePositionsY[i] = position.y;
 			ParticlePositionsZ[i] = position.z;
 		}
 
