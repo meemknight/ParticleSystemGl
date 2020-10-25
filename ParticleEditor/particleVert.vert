@@ -28,12 +28,11 @@ uniform float u_kd = 1.f;
 float distanceDim(float dist, float strength)
 {
 	float brightness;
-	brightness = 1/(dist*dist * strength + 1);
+	brightness = 1.f/(dist*dist * strength + 1);
 	return brightness;
 }
 
 subroutine vec3 applyLight();
-subroutine uniform applyLight u_lProgram;
 
 subroutine (applyLight)
 vec3 p_withL()
@@ -55,6 +54,9 @@ vec3 p_outL()
 {
 	return vec3(1,1,1);
 }
+
+subroutine uniform applyLight u_lProgram;
+
 
 void main()
 {

@@ -57,7 +57,7 @@ struct ParticleSystem
 	void loadParticleSystem(const char* name);
 
 	//modifying this might break the program if the particle system is running
-	unsigned int count; 
+	int count; 
 
 	bool running = true;
 

@@ -224,22 +224,6 @@ void ParticleSystem::draw(float deltaTime)
 		glVertexAttribDivisor(1, 1);
 		glVertexAttribDivisor(2, 1);
 
-		sp.bind();
-		if (light && affectedByLight)
-		{
-			light->bind(sp);
-			unsigned int u = sp.getSoubRutineLocation("p_withL", GL_VERTEX_SHADER);
-			glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &u);
-
-
-		}
-		else
-		{
-			unsigned int u = sp.getSoubRutineLocation("p_outL", GL_VERTEX_SHADER);
-			glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &u);
-
-		}
-
 		sp.uniformi("count", count);
 		sp.uniformi("firstPos", currentParticle);
 		sp.uniform("u_fadeColor", fadeColor.x, fadeColor.y, fadeColor.z);
@@ -264,6 +248,33 @@ void ParticleSystem::draw(float deltaTime)
 		glUniformMatrix4fv(sp.getUniformLocation("projectionMatrix"), 1, GL_FALSE, &projection[0][0]);
 		glUniformMatrix4fv(sp.getUniformLocation("positionMatrix"), 1, GL_FALSE, &position[0][0]);
 
+		sp.bind();
+		if (light && affectedByLight)
+		{
+			light->bind(sp);
+			unsigned int u = sp.getSoubRutineLocation("p_withL", GL_VERTEX_SHADER);
+			glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &u);
+
+
+		}
+		else
+		{
+			int variableIndex = glGetSubroutineUniformLocation(sp.id, GL_VERTEX_SHADER,
+				"u_lProgram");
+
+			unsigned int u = sp.getSoubRutineLocation("p_outL", GL_VERTEX_SHADER);
+
+			int n = 0;
+			glGetIntegerv(GL_MAX_SUBROUTINE_UNIFORM_LOCATIONS, &n);
+			GLuint* indices = new GLuint[n];
+			indices[variableIndex] = u;
+
+			glUniformSubroutinesuiv(GL_VERTEX_SHADER, n, indices);
+
+			delete[] indices;
+
+		}
+
 		glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, count);
 	}
 
@@ -286,6 +297,7 @@ void ParticleSystem::cleanup()
 	accumulatedAdvance = 0.f;
 }
 
+//todo make the shader internal to the particle system
 void ParticleSystem::buildParticleSystem()
 {
 	currentParticle = 0;

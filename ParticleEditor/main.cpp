@@ -17,6 +17,11 @@
 #include "imgui_impl_glfw_gl3.h"
 #include "save.h"
 
+extern "C"
+{
+	__declspec(dllexport) unsigned long NvOptimusEnablement = 1;
+}
+
 int MAIN
 {
 	if(!glfwInit())
